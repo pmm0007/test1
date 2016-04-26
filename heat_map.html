@@ -1,0 +1,409 @@
+<meta charset="utf-8">
+     <style>
+      /* disable text selection */
+      svg *::selection {
+         background : transparent;
+      }
+     
+      svg *::-moz-selection {
+         background:transparent;
+      } 
+     
+      svg *::-webkit-selection {
+         background:transparent;
+      }
+      rect.selection {
+        stroke          : #333;
+        stroke-dasharray: 4px;
+        stroke-opacity  : 0.5;
+        fill            : transparent;
+      }
+
+      rect.cell-border {
+        stroke: #eee;
+        stroke-width:0.3px;   
+      }
+
+      rect.cell-selected {
+        stroke: rgb(51,102,153);
+        stroke-width:0.5px;   
+      }
+
+      rect.cell-hover {
+        stroke: #F00;
+        stroke-width:0.3px;   
+      }
+
+      text.mono {
+        font-size: 9pt;
+        font-family: Consolas, courier;
+        fill: #aaa;
+      }
+
+      text.text-selected {
+        fill: #000;
+      }
+
+      text.text-highlight {
+        fill: #c00;
+      }
+      text.text-hover {
+        fill: #00C;
+      }
+      #tooltip {
+        position: absolute;
+        width: 200px;
+        height: auto;
+        padding: 10px;
+        background-color: white;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+      }
+
+      #tooltip.hidden {
+        display: none;
+      }
+
+      #tooltip p {
+        margin: 0;
+        font-family: sans-serif;
+        font-size: 12px;
+        line-height: 20px;
+      }
+    </style>
+
+</head>
+<div id="tooltip" class="hidden">
+        <p><span id="value"></p>
+</div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+Order: 
+  <select id="order">
+  <option value="hclust">by cluster</option>
+  <option value="probecontrast">by Team Name and Category</option>
+  <option value="probe">by Category</option>
+  <option value="contrast">by Team Name</option>
+  <option value="custom">by log2 ratio</option>
+  </select>
+  </select>
+<div id="chart" style='overflow:auto; width:960px; height:480px;'></div>
+
+<script type="text/javascript">
+var margin = { top: 200, right: 10, bottom: 50, left: 100 },
+  cellSize=12;
+  col_number=85;
+  row_number=43;
+  width = cellSize*col_number, // - margin.left - margin.right,
+  height = cellSize*row_number , // - margin.top - margin.bottom,
+  //gridSize = Math.floor(width / 24),
+  legendElementWidth = cellSize*2.5,
+  colorBuckets = 21,
+  colors = ['#ffffff','#e6f2ff','#cce6ff','#b3d9ff','#99ccff','#80bfff','#66b3ff','#4da6ff','#3399ff','#1a8cff','#0080ff','#0073e6','#0066cc','#0059b3','#004d99','#004080','#003366','#00264d','#001a33','#000d1a','#000000'];
+  hcrow = [11,30,4,18,6,12,20,19,33,32,26,35,38,3,23,22,10,2,15,16,36,8,25,29,7,27,34,31,14,9,39,1,37,21,5,28,17,24,13,40,41,42,43], // change to gene name or probe id
+  hccol = [6,5,41,12,42,21,14,16,15,17,37,38,25,22,7,8,2,9,20,24,23,19,13,40,11,1,39,10,3,26,27,18,31,32,30,4,28,29,36,34,33,35,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85], // change to gene name or probe id
+  rowLabel = ['GP','PTS','OREB','ORPG','DREB','DRPG','REB','RPG','PPG','FGMPG','FGAPG','FGM','FGA','FG%','2PM','2PA','2P%','PPS','FG%','FTMPG','FTAPG','FTM','FTA','FT%','3PMPG','3PAPG','3PM','3PA','3P%','AST','APG','TO','TOPG','AST/TO','STL','STLPG','PF','STL/TO','STL/PF','BLK','BLKPG','BLK/PF','Win/Loss'], // change to gene name or probe id
+  colLabel = ['Hawaii 2016','Wichita St 2016','Yale 2016', 'Northern Iowa 2016','VCU 2016','Stephen F. Austin 2016','Arkansas-Little Rock 2016','Gonzaga 2016','Syracuse 2016','Middle Tennessee 2016','Dayton 2015','UCLA 2015','UAB 2015','Georgia State 2015','Ohio State 2015','Stephen F. Austin 2014','Dayton 2014','Stanford 2014','Harvard 2014','Mercer 2014','Tennessee 2014','North Dakota State 2014','Oregon 2013','Ole Miss 2013','La Salle 2013','Harvard 2013','Iowa State 2013','Minnesota 2013','Florida Gulf Coast 2013','California 2013','VCU 2012','Colorado 2012','Xavier 2012','Lehigh 2012','Norfolk State 2012','South Florida 2012','Ohio 2012','NC ST 2012','Purdue 2012','California 2016','Arizona 2016','Baylor 2016','Texas 2016','Oregon State 2016','West Virginia 2016','Purdue 2016','Seton Hall 2016','Dayton 2016','Michigan State 2016','Utah 2016','Virginia 2016','Providence 2015','SMU 2015','Iowa State 2015','Baylor 2015','VCU 2015','VCU 2014','Ohio State 2014','New Mexico 2014','Cincinnati 2014','Duke 2014','Massachusetts 2014','Oklahoma 2014','Syracuse 2014','Kansas 2014','Oklahoma 2013','Wisconsin 2013','Kansas State 2013','New Mexico 2013','Notre Dame 2013','UCLA 2013','Georgetown 2013','UNLV 2013','Saint Louis 2013','San Diego State 2013','Duke 2012','Georgetown 2012','Michigan 2012','Missouri 2012','Notre Dame 2012','Saint Marys 2012','San Diego State 2012','Temple 2012','UNLV 2012','Wichita State 2012']; // change to contrast name
+
+d3.tsv("data_heatmap.tsv",
+function(d) {
+  return {
+    row:   +d.row_idx,
+    col:   +d.col_idx,
+    value: +d.log2ratio
+  };
+},
+function(error, data) {
+  var colorScale = d3.scale.quantile()
+      .domain([ -10 , 0, 10])
+      .range(colors);
+  
+  var svg = d3.select("#chart").append("svg")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      ;
+  var rowSortOrder=false;
+  var colSortOrder=false;
+  var rowLabels = svg.append("g")
+      .selectAll(".rowLabelg")
+      .data(rowLabel)
+      .enter()
+      .append("text")
+      .text(function (d) { return d; })
+      .attr("x", 0)
+      .attr("y", function (d, i) { return hcrow.indexOf(i+1) * cellSize; })
+      .style("text-anchor", "end")
+      .attr("transform", "translate(-6," + cellSize / 1.5 + ")")
+      .attr("class", function (d,i) { return "rowLabel mono r"+i;} ) 
+      .on("mouseover", function(d) {d3.select(this).classed("text-hover",true);})
+      .on("mouseout" , function(d) {d3.select(this).classed("text-hover",false);})
+      .on("click", function(d,i) {rowSortOrder=!rowSortOrder; sortbylabel("r",i,rowSortOrder);d3.select("#order").property("selectedIndex", 4).node().focus();;})
+      ;
+
+  var colLabels = svg.append("g")
+      .selectAll(".colLabelg")
+      .data(colLabel)
+      .enter()
+      .append("text")
+      .text(function (d) { return d; })
+      .attr("x", 0)
+      .attr("y", function (d, i) { return hccol.indexOf(i+1) * cellSize; })
+      .style("text-anchor", "left")
+      .attr("transform", "translate("+cellSize/2 + ",-6) rotate (-90)")
+      .attr("class",  function (d,i) { return "colLabel mono c"+i;} )
+      .on("mouseover", function(d) {d3.select(this).classed("text-hover",true);})
+      .on("mouseout" , function(d) {d3.select(this).classed("text-hover",false);})
+      .on("click", function(d,i) {colSortOrder=!colSortOrder;  sortbylabel("c",i,colSortOrder);d3.select("#order").property("selectedIndex", 4).node().focus();;})
+      ;
+
+  var heatMap = svg.append("g").attr("class","g3")
+        .selectAll(".cellg")
+        .data(data,function(d){return d.row+":"+d.col;})
+        .enter()
+        .append("rect")
+        .attr("x", function(d) { return hccol.indexOf(d.col) * cellSize; })
+        .attr("y", function(d) { return hcrow.indexOf(d.row) * cellSize; })
+        .attr("class", function(d){return "cell cell-border cr"+(d.row-1)+" cc"+(d.col-1);})
+        .attr("width", cellSize)
+        .attr("height", cellSize)
+        .style("fill", function(d) { return colorScale(d.value); })
+        /* .on("click", function(d) {
+               var rowtext=d3.select(".r"+(d.row-1));
+               if(rowtext.classed("text-selected")==false){
+                   rowtext.classed("text-selected",true);
+               }else{
+                   rowtext.classed("text-selected",false);
+               }
+        })*/
+        .on("mouseover", function(d){
+               //highlight text
+               d3.select(this).classed("cell-hover",true);
+               d3.selectAll(".rowLabel").classed("text-highlight",function(r,ri){ return ri==(d.row-1);});
+               d3.selectAll(".colLabel").classed("text-highlight",function(c,ci){ return ci==(d.col-1);});
+        
+               //Update the tooltip position and value
+               d3.select("#tooltip")
+                 .style("left", (d3.event.pageX+10) + "px")
+                 .style("top", (d3.event.pageY-10) + "px")
+                 .select("#value")
+                 .text("lables:"+rowLabel[d.row-1]+","+colLabel[d.col-1]+"\ndata:"+d.value+"\nrow-col-idx:"+d.col+","+d.row+"\ncell-xy "+this.x.baseVal.value+", "+this.y.baseVal.value);  
+               //Show the tooltip
+               d3.select("#tooltip").classed("hidden", false);
+        })
+        .on("mouseout", function(){
+               d3.select(this).classed("cell-hover",false);
+               d3.selectAll(".rowLabel").classed("text-highlight",false);
+               d3.selectAll(".colLabel").classed("text-highlight",false);
+               d3.select("#tooltip").classed("hidden", true);
+        })
+        ;
+
+  var legend = svg.selectAll(".legend")
+      .data([-10,-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1,2,3,4,5,6,7,8,9,10])
+      .enter().append("g")
+      .attr("class", "legend");
+ 
+  legend.append("rect")
+    .attr("x", function(d, i) { return legendElementWidth * i; })
+    .attr("y", height+(cellSize*2))
+    .attr("width", legendElementWidth)
+    .attr("height", cellSize)
+    .style("fill", function(d, i) { return colors[i]; });
+ 
+  legend.append("text")
+    .attr("class", "mono")
+    .text(function(d) { return d; })
+    .attr("width", legendElementWidth)
+    .attr("x", function(d, i) { return legendElementWidth * i; })
+    .attr("y", height + (cellSize*4));
+
+// Change ordering of cells
+
+  function sortbylabel(rORc,i,sortOrder){
+       var t = svg.transition().duration(3000);
+       var log2r=[];
+       var sorted; // sorted is zero-based index
+       d3.selectAll(".c"+rORc+i) 
+         .filter(function(ce){
+            log2r.push(ce.value);
+          })
+       ;
+       if(rORc=="r"){ // sort log2ratio of a gene
+         sorted=d3.range(col_number).sort(function(a,b){ if(sortOrder){ return log2r[b]-log2r[a];}else{ return log2r[a]-log2r[b];}});
+         t.selectAll(".cell")
+           .attr("x", function(d) { return sorted.indexOf(d.col-1) * cellSize; })
+           ;
+         t.selectAll(".colLabel")
+          .attr("y", function (d, i) { return sorted.indexOf(i) * cellSize; })
+         ;
+       }else{ // sort log2ratio of a contrast
+         sorted=d3.range(row_number).sort(function(a,b){if(sortOrder){ return log2r[b]-log2r[a];}else{ return log2r[a]-log2r[b];}});
+         t.selectAll(".cell")
+           .attr("y", function(d) { return sorted.indexOf(d.row-1) * cellSize; })
+           ;
+         t.selectAll(".rowLabel")
+          .attr("y", function (d, i) { return sorted.indexOf(i) * cellSize; })
+         ;
+       }
+  }
+
+  d3.select("#order").on("change",function(){
+    order(this.value);
+  });
+  
+  function order(value){
+   if(value=="hclust"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("x", function(d) { return hccol.indexOf(d.col) * cellSize; })
+      .attr("y", function(d) { return hcrow.indexOf(d.row) * cellSize; })
+      ;
+
+    t.selectAll(".rowLabel")
+      .attr("y", function (d, i) { return hcrow.indexOf(i+1) * cellSize; })
+      ;
+
+    t.selectAll(".colLabel")
+      .attr("y", function (d, i) { return hccol.indexOf(i+1) * cellSize; })
+      ;
+
+   }else if (value=="probecontrast"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("x", function(d) { return (d.col - 1) * cellSize; })
+      .attr("y", function(d) { return (d.row - 1) * cellSize; })
+      ;
+
+    t.selectAll(".rowLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+
+    t.selectAll(".colLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+
+   }else if (value=="probe"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("y", function(d) { return (d.row - 1) * cellSize; })
+      ;
+
+    t.selectAll(".rowLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+   }else if (value=="contrast"){
+    var t = svg.transition().duration(3000);
+    t.selectAll(".cell")
+      .attr("x", function(d) { return (d.col - 1) * cellSize; })
+      ;
+    t.selectAll(".colLabel")
+      .attr("y", function (d, i) { return i * cellSize; })
+      ;
+   }
+  }
+  // 
+  var sa=d3.select(".g3")
+      .on("mousedown", function() {
+          if( !d3.event.altKey) {
+             d3.selectAll(".cell-selected").classed("cell-selected",false);
+             d3.selectAll(".rowLabel").classed("text-selected",false);
+             d3.selectAll(".colLabel").classed("text-selected",false);
+          }
+         var p = d3.mouse(this);
+         sa.append("rect")
+         .attr({
+             rx      : 0,
+             ry      : 0,
+             class   : "selection",
+             x       : p[0],
+             y       : p[1],
+             width   : 1,
+             height  : 1
+         })
+      })
+      .on("mousemove", function() {
+         var s = sa.select("rect.selection");
+      
+         if(!s.empty()) {
+             var p = d3.mouse(this),
+                 d = {
+                     x       : parseInt(s.attr("x"), 10),
+                     y       : parseInt(s.attr("y"), 10),
+                     width   : parseInt(s.attr("width"), 10),
+                     height  : parseInt(s.attr("height"), 10)
+                 },
+                 move = {
+                     x : p[0] - d.x,
+                     y : p[1] - d.y
+                 }
+             ;
+      
+             if(move.x < 1 || (move.x*2<d.width)) {
+                 d.x = p[0];
+                 d.width -= move.x;
+             } else {
+                 d.width = move.x;       
+             }
+      
+             if(move.y < 1 || (move.y*2<d.height)) {
+                 d.y = p[1];
+                 d.height -= move.y;
+             } else {
+                 d.height = move.y;       
+             }
+             s.attr(d);
+      
+                 // deselect all temporary selected state objects
+             d3.selectAll('.cell-selection.cell-selected').classed("cell-selected", false);
+             d3.selectAll(".text-selection.text-selected").classed("text-selected",false);
+
+             d3.selectAll('.cell').filter(function(cell_d, i) {
+                 if(
+                     !d3.select(this).classed("cell-selected") && 
+                         // inner circle inside selection frame
+                     (this.x.baseVal.value)+cellSize >= d.x && (this.x.baseVal.value)<=d.x+d.width && 
+                     (this.y.baseVal.value)+cellSize >= d.y && (this.y.baseVal.value)<=d.y+d.height
+                 ) {
+      
+                     d3.select(this)
+                     .classed("cell-selection", true)
+                     .classed("cell-selected", true);
+
+                     d3.select(".r"+(cell_d.row-1))
+                     .classed("text-selection",true)
+                     .classed("text-selected",true);
+
+                     d3.select(".c"+(cell_d.col-1))
+                     .classed("text-selection",true)
+                     .classed("text-selected",true);
+                 }
+             });
+         }
+      })
+      .on("mouseup", function() {
+            // remove selection frame
+         sa.selectAll("rect.selection").remove();
+      
+             // remove temporary selection marker class
+         d3.selectAll('.cell-selection').classed("cell-selection", false);
+         d3.selectAll(".text-selection").classed("text-selection",false);
+      })
+      .on("mouseout", function() {
+         if(d3.event.relatedTarget.tagName=='html') {
+                 // remove selection frame
+             sa.selectAll("rect.selection").remove();
+                 // remove temporary selection marker class
+             d3.selectAll('.cell-selection').classed("cell-selection", false);
+             d3.selectAll(".rowLabel").classed("text-selected",false);
+             d3.selectAll(".colLabel").classed("text-selected",false);
+         }
+      })
+      ;
+});
+</script>

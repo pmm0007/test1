@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+<style></style>
+<!--Source Codes - Highcharts and JQuery-->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://code.highcharts.com/modules/exporting.js"></script>
+
+<div id="container" style="min-width: 310px; height: 400px; margin: 0 auto"></div>
+</head>
+<body>
+  <!--Interactive Filterable Chart Build Skeleton-->
+<script>
+$(function () {
+    $('#container').highcharts({
+        chart: {
+            type: 'column'
+        },
+        title: {
+            text: 'Average Differences for Miles Traveled by Game Winners - Year & Game Specific'
+        },
+        xAxis: {
+            categories: ['2011', '2012', '2013', '2014', '2015', '2016']
+        },
+        credits: {
+            enabled: false
+        },
+        series: [{
+            name: 'Game 1',
+            data: [-118.906, -107.125, 59, -212.563, 19.219, -233.188]
+        }, {
+            name: 'Game 2',
+            data: [-151.125, -245.938, -323.688, -338.375, -128.25, -354.313]
+        }, {
+            name: 'Game 3',
+            data: [87.25, -421, -43.75, -126.5, -33.75, -660.25]
+        }, {
+            name: 'Game 4',
+            data: [640, -230.75, 272.5, -92.75, -480.25, 66.75]
+        }, {
+            name: 'Game 5',
+            data: [-641.5, -825, -655, 264, 923, -74.5]
+        }, {
+            name: 'Game 6',
+            data: [1034, -175, -311, 609, -941, -536]
+
+        }]
+    });
+});
+</script>
+
+<!--Left Table-->
+
+  <table align= "left", style="border-collapse:collapse; text-align: center">
+           <thead style = "font-family: Arial; font-size: 18px">
+               <tr>
+                   <th colspan="2" style = "color: red">Average Difference In Winner's Mileage by Year - All Games</th>
+               </tr>
+               <tr style="border-bottom:1px solid black;">
+                   <th style="padding:5px;"><em>Year</em></th>
+                   <th style="padding:5px;border-left:1px solid black;"><em>Average Mileage Difference</em></th>
+               </tr>
+           </thead>
+           <tbody>
+               <tr>
+                   <td style="padding:5px;">2011</td>
+                   <td style="padding:5px;border-left:1px solid black;">- 51.026 miles</td>
+               </tr>
+
+               <tr>
+                   <td style="padding:5px;">2012</td>
+                   <td style="padding:5px;border-left:1px solid black;">- 213.95 miles</td>
+               </tr>
+
+               <tr>
+                   <td style="padding:5px;">2013</td>
+                   <td style="padding:5px;border-left:1px solid black;">- 66.23 miles</td>
+               </tr>
+
+               <tr>
+                   <td style="padding:5px;">2014</td>
+                   <td style="padding:5px;border-left:1px solid black;">- 197.81 miles</td>
+               </tr>
+
+               <tr>
+                   <td style="padding:5px;">2015</td>
+                   <td style="padding:5px;border-left:1px solid black;">- 43.22 miles</td>
+               </tr>
+
+               <tr>
+                   <td style="padding:5px;">2016</td>
+                   <td style="padding:5px;border-left:1px solid black;">- 293.83 miles</td>
+               </tr>
+          </tbody>
+       </table>
+
+<!--Right Table-->
+<table align= "right", style="border-collapse:collapse; text-align: center">
+                <thead style = "font-family: Arial; font-size: 18px">
+                    <tr>
+                        <th colspan="2" style = "color: red">Average Difference In Winner's Mileage by Game - All Years</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid black;">
+                        <th style="padding:5px;"><em>Game</em></th>
+                        <th style="padding:5px;border-left:1px solid black;"><em>Average Mileage Difference</em></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:5px;">Game 1</td>
+                        <td style="padding:5px;border-left:1px solid black;">- 97.26 miles</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:5px;">Game 2</td>
+                        <td style="padding:5px;border-left:1px solid black;">- 256.95 miles</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:5px;">Game 3</td>
+                        <td style="padding:5px;border-left:1px solid black;">- 199.67 miles</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:5px;">Game 4</td>
+                        <td style="padding:5px;border-left:1px solid black;">29.25 miles</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:5px;">Game 5</td>
+                        <td style="padding:5px;border-left:1px solid black;">- 168.25 miles</td>
+                    </tr>
+
+                    <tr>
+                        <td style="padding:5px;">Game 6</td>
+                        <td style="padding:5px;border-left:1px solid black;">- 53.33 miles</td>
+                    </tr>
+               </tbody>
+            </table>
+
+
+
+</body>
+</html>
